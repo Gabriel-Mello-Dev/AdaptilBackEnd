@@ -1,8 +1,12 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import cors from "cors";
 
 const app = express();
+
+app.use(cors());
+app.use(express.json());
 
 const server = http.createServer(app);
 
@@ -12,15 +16,43 @@ const io = new Server(server, {
   },
 });
 
-app.get("/", (req, res) => {
-  res.send("Servidor rodando");
+const rooms = new Set();
+
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+app.post("/create-room", (req, res) => {
+  const roomId = generateRoomCode();
+
+  rooms.add(roomId);
+
+  res.json({
+    roomId,
+  });
+});
+
+app.get("/room/:roomId", (req, res) => {
+  const exists = rooms.has(req.params.roomId);
+
+  res.json({
+    exists,
+  });
 });
 
 io.on("connection", (socket) => {
-  console.log("Cliente conectado:", socket.id);
+  console.log("Conectado:", socket.id);
 
-  socket.on("mensagem", (msg) => {
-    io.emit("mensagem", msg);
+  socket.on("join-room", (roomId) => {
+    if (!rooms.has(roomId)) return;
+
+    socket.join(roomId);
+
+    console.log(`${socket.id} entrou em ${roomId}`);
+  });
+
+  socket.on("message", ({ roomId, message }) => {
+    io.to(roomId).emit("message", message);
   });
 
   socket.on("disconnect", () => {
@@ -28,8 +60,6 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
-
-server.listen(PORT, () => {
+server.listen(4000, () => {
   console.log("Servidor iniciado");
 });
