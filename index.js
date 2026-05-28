@@ -55,6 +55,10 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("message", message);
   });
 
+  socket.on("question", ({ roomId, question }) => {
+    io.to(roomId).emit("question", question);
+  });
+
   socket.on("disconnect", () => {
     console.log("Desconectado");
   });
