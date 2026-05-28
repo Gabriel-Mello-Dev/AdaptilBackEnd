@@ -42,7 +42,7 @@ app.get("/room/:roomId", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("Conectado:", socket.id);
-
+  const roomVotes = {};
   socket.on("join-room", (roomId) => {
     if (!rooms.has(roomId)) return;
 
@@ -56,7 +56,27 @@ io.on("connection", (socket) => {
   });
 
   socket.on("question", ({ roomId, question }) => {
+    roomVotes[roomId] = [];
+
     io.to(roomId).emit("question", question);
+  });
+
+  socket.on("vote", ({ roomId, answer }) => {
+    if (!roomVotes[roomId]) {
+      roomVotes[roomId] = [];
+    }
+
+    roomVotes[roomId].push(answer);
+
+    const votos = roomVotes[roomId];
+
+    const contagem = {};
+
+    votos.forEach((voto) => {
+      contagem[voto] = (contagem[voto] || 0) + 1;
+    });
+
+    io.to(roomId).emit("vote-update", contagem);
   });
 
   socket.on("disconnect", () => {
