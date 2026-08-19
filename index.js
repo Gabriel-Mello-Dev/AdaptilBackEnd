@@ -47,10 +47,7 @@ const roomQuestions = {};
  * GERAR CÓDIGO DA SALA
  */
 function generateRoomCode() {
-  return Math.random()
-    .toString(36)
-    .substring(2, 8)
-    .toUpperCase();
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 /*
@@ -121,6 +118,7 @@ io.on("connection", (socket) => {
   });
 
   /*
+  
    * IA COMEÇOU A GERAR A QUESTÃO
    */
   socket.on("question-generating", ({ roomId }) => {
